@@ -41,7 +41,7 @@ RUN rustup target add riscv64gc-unknown-linux-gnu
 
 WORKDIR /opt/cartesi/dapp
 COPY . .
-RUN cargo build --release
+RUN cargo build --release --target riscv64gc-unknown-linux-gnu
 
 FROM --platform=linux/riscv64 riscv64/ubuntu:22.04
 
