@@ -1,0 +1,8 @@
+[package]
+name = "dapp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-std = "1.12.0"
+crabrolls = "1.3.0"
