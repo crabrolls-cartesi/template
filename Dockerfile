@@ -1,5 +1,5 @@
 # syntax=docker.io/docker/dockerfile:1
-FROM ubuntu:22.04 as builder
+FROM ubuntu:22.04 AS builder
 
 ENV RUSTUP_HOME=/usr/local/rustup \
 	CARGO_HOME=/usr/local/cargo \
@@ -43,14 +43,14 @@ WORKDIR /opt/cartesi/dapp
 COPY . .
 RUN cargo build --release --target riscv64gc-unknown-linux-gnu
 
-FROM --platform=linux/riscv64 riscv64/ubuntu:22.04
+FROM riscv64/ubuntu:22.04
 
 ARG MACHINE_EMULATOR_TOOLS_VERSION=0.14.1
 ADD https://github.com/cartesi/machine-emulator-tools/releases/download/v${MACHINE_EMULATOR_TOOLS_VERSION}/machine-emulator-tools-v${MACHINE_EMULATOR_TOOLS_VERSION}.deb /
 RUN dpkg -i /machine-emulator-tools-v${MACHINE_EMULATOR_TOOLS_VERSION}.deb \
 	&& rm /machine-emulator-tools-v${MACHINE_EMULATOR_TOOLS_VERSION}.deb
 
-LABEL io.cartesi.rollups.sdk_version=0.6.0
+LABEL io.cartesi.rollups.sdk_version=0.9.0
 LABEL io.cartesi.rollups.ram_size=128Mi
 
 ARG DEBIAN_FRONTEND=noninteractive

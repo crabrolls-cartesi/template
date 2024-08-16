@@ -14,21 +14,28 @@ impl Application for EchoApp {
         &self,
         env: &impl Environment,
         metadata: Metadata,
-        payload: Vec<u8>,
+        payload: &[u8],
+        _deposit: Option<Deposit>,
     ) -> Result<FinishStatus, Box<dyn Error>> {
-        let string_payload = String::from_utf8_lossy(&payload);
-        println!("Advance method called with payload: {:?}", string_payload);
-        env.send_notice(payload.clone()).await?;
-        env.send_report(payload.clone()).await?;
-        env.send_voucher(metadata.msg_sender, payload).await?;
+        println!(
+            "Advance method called with payload: {:?}",
+            String::from_utf8_lossy(payload)
+        );
+        env.send_notice(payload).await?;
+        env.send_report(payload).await?;
+        env.send_voucher(metadata.sender, payload).await?;
         Ok(FinishStatus::Accept)
     }
 
     async fn inspect(
         &self,
         env: &impl Environment,
-        payload: Vec<u8>,
+        payload: &[u8],
     ) -> Result<FinishStatus, Box<dyn Error>> {
+        println!(
+            "Inspect method called with payload: {:?}",
+            String::from_utf8_lossy(payload)
+        );
         env.send_report(payload).await?;
         Ok(FinishStatus::Accept)
     }
@@ -38,7 +45,7 @@ impl Application for EchoApp {
 async fn main() {
     let app = EchoApp::new();
     let options = RunOptions::default();
-    if let Err(e) = run(app, options).await {
+    if let Err(e) = Supervisor::run(app, options).await {
         eprintln!("Error: {}", e);
     }
 }
@@ -47,47 +54,50 @@ async fn main() {
 mod tests {
     use super::EchoApp;
     use crabrolls::prelude::*;
+    use ethabi::Address;
 
     #[async_std::test]
     async fn test_echo() {
         let app = EchoApp::new();
-        let tester = Tester::new(app);
+        let tester = Tester::new(app, MockupOptions::default());
 
         let address = Address::default();
 
-        let payload = b"Hi Crabrolls!".to_vec();
-        let result = tester.advance(address, payload.clone()).await;
+        let payload = b"Hi Crabrolls!";
+        let result = tester.advance(address, payload).await;
+
+        assert!(result.is_accepted(), "Expected Accept status");
+
+        assert!(!result.is_errored(), "Expected no error");
 
         assert_eq!(
-            result.status,
-            FinishStatus::Accept,
-            "Expected Accept status"
-        );
-
-        assert!(result.error.is_none(), "Expected no error");
-
-        assert_eq!(
-            result.outputs.len(),
+            result.get_outputs().len(),
             3,
             "Expected 3 outputs, got {}",
-            result.outputs.len()
+            result.get_outputs().len()
         );
 
         assert_eq!(
-            result.outputs,
+            result.get_outputs(),
             vec![
                 Output::Notice {
-                    payload: payload.clone()
+                    payload: payload.to_vec()
                 },
                 Output::Report {
-                    payload: payload.clone()
+                    payload: payload.to_vec()
                 },
                 Output::Voucher {
                     destination: address,
-                    payload: payload.clone()
+                    payload: payload.to_vec()
                 }
             ],
             "Expected outputs to match"
+        );
+
+        assert_eq!(
+            result.get_metadata().sender,
+            Address::default(),
+            "Unexpected sender address"
         );
     }
 }
