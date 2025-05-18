@@ -23,7 +23,8 @@ impl Application for EchoApp {
         );
         env.send_notice(payload).await?;
         env.send_report(payload).await?;
-        env.send_voucher(metadata.sender, payload).await?;
+        env.send_voucher(metadata.sender, payload, 0).await?;
+        env.send_delegate_voucher(metadata.sender, payload).await?;
         Ok(FinishStatus::Accept)
     }
 
