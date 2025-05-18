@@ -1,6 +1,7 @@
 use crabrolls::prelude::*;
 use std::error::Error;
 
+#[derive(Debug, Clone)]
 struct EchoApp;
 
 impl EchoApp {
@@ -18,12 +19,14 @@ impl Application for EchoApp {
         _deposit: Option<Deposit>,
     ) -> Result<FinishStatus, Box<dyn Error>> {
         println!(
-            "Advance method called with payload: {:?}",
+            "Advance method called with payloadsssd1123d: {:?}",
             String::from_utf8_lossy(payload)
         );
         env.send_notice(payload).await?;
         env.send_report(payload).await?;
-        env.send_voucher(metadata.sender, payload).await?;
+        env.send_voucher(metadata.sender, payload, 0).await?;
+        env.send_delegate_voucher(metadata.sender, payload).await?;
+
         Ok(FinishStatus::Accept)
     }
 
@@ -33,7 +36,7 @@ impl Application for EchoApp {
         payload: &[u8],
     ) -> Result<FinishStatus, Box<dyn Error>> {
         println!(
-            "Inspect method called with payload: {:?}",
+            "Advance method called with payload: {:?}",
             String::from_utf8_lossy(payload)
         );
         env.send_report(payload).await?;
@@ -88,7 +91,8 @@ mod tests {
                 },
                 Output::Voucher {
                     destination: address,
-                    payload: payload.to_vec()
+                    payload: payload.to_vec(),
+                    value: 0,
                 }
             ],
             "Expected outputs to match"
